@@ -1,0 +1,49 @@
+.LRlink {
+  margin-top: 40px;
+  font-family: Noto Sans, Helvetica Neue, Helvetica, Arial, Liberation Sans,
+    Roboto, Noto, sans-serif;
+  color: #2557a7;
+  font-weight: 700;
+  text-align: center;
+  font-size: 14px;
+  height: 24px;
+  padding-right: 5px;
+  cursor: pointer;
+}
+
+.LRlin {
+  width: 40%;
+  top: 2rem;
+  margin-bottom: 1rem;
+  border-top: 2px solid #ececec;
+}
+
+.LRor {
+  font-family: Helvetica Neue, Helvetica, Arial, Liberation Sans, Roboto, Noto,
+    sans-serif;
+  font-weight: 400;
+  color: #6f6f6f;
+}
+
+.radiodiv {
+  width: 420px;
+  height: 40px;
+  border-radius: 0.5rem;
+  border: 1px solid #909090;
+  background-color: #fff;
+  padding: 2px;
+  padding-left: 5px;
+  margin: 5px 0 5px 0;
+}
+
+.rpar {
+  font-family: Noto Sans, Helvetica Neue, Helvetica, Arial, Liberation Sans,
+    Roboto, Noto, sans-serif;
+  color: #2557a7;
+  font-weight: 400;
+  text-align: center;
+  font-size: 16px;
+  height: 24px;
+  padding-right: 5px;
+  cursor: pointer;
+}

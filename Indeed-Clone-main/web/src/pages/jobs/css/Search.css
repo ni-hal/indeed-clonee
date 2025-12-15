@@ -1,0 +1,129 @@
+.search {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.searchHeader {
+  font-family: Noto Sans, Helvetica Neue, Helvetica, Arial, Liberation Sans,
+    Roboto, Noto, sans-serif;
+  color: #2d2d2d;
+  line-height: 1.75rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: center;
+}
+
+.searchOptions {
+  padding: 5px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.option {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  padding: auto;
+  margin-right: 10px;
+  background-color: #e4e2e0;
+  border-color: #e4e2e0;
+  border-radius: 0.5rem;
+}
+.option:hover {
+  cursor: pointer;
+  background-color: #d0ccc8;
+}
+.optionIcon {
+  margin-top: 13px;
+  padding-left: 10px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-right: 3px;
+  font-weight: 400;
+  font-size: 0.875rem;
+}
+
+.optionType {
+  padding-right: 10px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-left: 2px;
+  font-weight: 400;
+  font-size: 0.875rem;
+  font-family: Noto Sans, Helvetica Neue, Helvetica, Arial, Liberation Sans,
+    Roboto, Noto, sans-serif;
+}
+
+.searchStories {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin-top: 60px;
+  font-size: smaller;
+}
+
+.stories {
+  font-family: Noto Sans, Helvetica Neue, Helvetica, Arial, Liberation Sans,
+    Roboto, Noto, sans-serif;
+  font-weight: 400;
+  line-height: 1;
+  padding: 2.5px;
+}
+
+.stories2 {
+  font-family: Noto Sans, Helvetica Neue, Helvetica, Arial, Liberation Sans,
+    Roboto, Noto, sans-serif;
+  font-weight: 400;
+  line-height: 1;
+  color: #2557a7;
+  padding: 2.5px;
+}
+.stories2:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.MuiAutocomplete-root .MuiOutlinedInput-root.MuiInputBase-sizeSmall {
+  height: 45px;
+}
+
+a {
+  color: #2557a7;
+  font-weight: bold;
+}
+
+a:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+p {
+  color: #2d2d2d;
+}
+
+.separatingLine {
+  width: 99%;
+  top: 2rem;
+  margin-bottom: 1rem;
+  border-top: 1px solid #faf9f9;
+}
+
+.MuiAutocomplete-root .MuiFilledInput-root.MuiInputBase-sizeSmall .MuiFilledInput-input {
+  font-size: 14px;
+  margin-top: -8px;
+  margin-bottom: 8px;
+}
+
+.MuiFilledInput-input:hover {
+  padding: 0;
+  padding-bottom: 0;
+  cursor: pointer;
+}
+
+.MuiAutocomplete-root .MuiFilledInput-root.MuiInputBase-sizeSmall {
+  /* cursor: pointer; */
+  border-radius: 10px;
+}
