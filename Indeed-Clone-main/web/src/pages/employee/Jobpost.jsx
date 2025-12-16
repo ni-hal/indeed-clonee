@@ -148,7 +148,8 @@ const Jobpost = ({ handleClose, getCompanyJobs }) => {
     };
     console.log(body);
 
-    await postJob(body, user.company._id);
+    const companyId = user.company?._id || localStorage.getItem('companyId');
+    await postJob(body, companyId);
     handleClose();
     getCompanyJobs();
   };

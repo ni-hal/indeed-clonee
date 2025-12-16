@@ -26,9 +26,14 @@ function EmployeeJobs() {
   const handleOpen = () => setIsOpen(true);
   const handleClose = () => setIsOpen(false);
 
-  const getCompanyJobs = async (id = user.company._id) => {
+  const getCompanyJobs = async (id) => {
+    const companyId = id || user.company?._id || localStorage.getItem('companyId');
+    if (!companyId) {
+      console.error('No company ID available');
+      return;
+    }
     const params = { page: currentPage, limit: 10 };
-    const response = await getJobByCompanyID(id, params);
+    const response = await getJobByCompanyID(companyId, params);
     if (!response) return;
     setJobs(response.data.nodes);
     setTotalNumberOfJobs(response.data.total);

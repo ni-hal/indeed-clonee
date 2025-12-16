@@ -1,6 +1,6 @@
 /* eslint-disable implicit-arrow-linebreak */
 // import { getCookie } from 'react-use-cookie';
-import axiosInstance from '../../config/axiosConfig';
+import axiosInstance from '../../config/companyAxiosConfig';
 
 const getJobs = async (params) =>
   axiosInstance.get('/jobs', {

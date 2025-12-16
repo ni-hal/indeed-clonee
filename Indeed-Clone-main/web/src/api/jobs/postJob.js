@@ -1,4 +1,4 @@
-import axiosInstance from '../../config/axiosConfig';
+import axiosInstance from '../../config/companyAxiosConfig';
 
 const postJob = (payload, companyID) => axiosInstance
   .post(`/companies/${companyID}/jobs`, payload)
