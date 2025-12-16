@@ -1,0 +1,17 @@
+{
+  "development": {
+    "database_conn": "mongodb://127.0.0.1:27017/user",
+    "auth_url": "http://localhost:8002",
+    "company_url": "http://localhost:4000",
+    "review_url": "http://localhost:3000",
+    "application_url": "http://localhost:3000",
+    "photos_url": "http://localhost:3000",
+    "kafka_host": "kafka:9092",
+    "s3_access_key": "YOUR_AWS_ACCESS_KEY",
+    "s3_secret_key": "YOUR_AWS_SECRET_KEY",
+    "s3_region": "us-east-1",
+    "s3_bucket_name": "indeed-media",
+    "redis_host": "redis",
+    "redis_pass": "indeedredispass"
+  }
+}

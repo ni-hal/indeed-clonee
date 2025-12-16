@@ -53,7 +53,7 @@ function EmployeeJobs() {
   console.log(jobs);
 
   useEffect(() => {
-    if (!user.company._id) {
+    if (!user.company || !user.company._id) {
       getEmployerDetails();
     } else {
       getCompanyJobs();

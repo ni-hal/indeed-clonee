@@ -117,8 +117,8 @@ const getAllCompanies = async (req, res) => {
 
     if (all) {
       const companies = await Company.find({});
-      const avgReviewMap = await getAvgReviewData(req.headers.authorization);
-      const avgSalaryMap = await getAvgSalaryData(req.headers.authorization);
+      const avgReviewMap = req.headers.authorization ? await getAvgReviewData(req.headers.authorization) : {};
+      const avgSalaryMap = req.headers.authorization ? await getAvgSalaryData(req.headers.authorization) : {};
 
       const result = companies.map((c) => ({
         ...avgReviewMap[c._id.toString()],
@@ -154,8 +154,8 @@ const getAllCompanies = async (req, res) => {
       .skip(offset)
       .limit(limit);
 
-    const avgReviewMap = await getAvgReviewData(req.headers.authorization);
-    const avgSalaryMap = await getAvgSalaryData(req.headers.authorization);
+    const avgReviewMap = req.headers.authorization ? await getAvgReviewData(req.headers.authorization) : {};
+    const avgSalaryMap = req.headers.authorization ? await getAvgSalaryData(req.headers.authorization) : {};
     const result = companyList.map((c) => ({
       ...avgReviewMap[c._id.toString()],
       ...avgSalaryMap[c._id.toString()],
@@ -203,31 +203,14 @@ const getCompanyById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const companyList = await Company.aggregate([
-      { $match: { _id: Types.ObjectId(id) } },
-      {
-        $lookup: {
-          from: 'employers',
-          localField: 'employers',
-          foreignField: '_id',
-          as: 'employers',
-        },
-      },
-    ]);
+    const company = await Company.findById(id);
 
-    const avgReviewMap = await getAvgReviewData(req.headers.authorization);
-    const avgSalaryMap = await getAvgSalaryData(req.headers.authorization);
-
-    if (companyList.length === 0) {
+    if (!company) {
       res.status(404).json(errors.notFound);
       return;
     }
 
-    res.status(200).json({
-      ...companyList[0],
-      ...avgReviewMap[companyList[0]._id.toString()],
-      ...avgSalaryMap[companyList[0]._id.toString()],
-    });
+    res.status(200).json(company);
   } catch (err) {
     console.log(err);
     res.status(500).json(errors.serverError);
@@ -246,14 +229,14 @@ const createCompany = async (req, res) => {
     }
 
     const company = req.body;
-    company.employers = [user];
+    company.employers = user ? [user] : [];
 
     // Temporarily disable Kafka
     const newCompany = new Company(company);
     const savedCompany = await newCompany.save();
     
     const companyList = await Company.aggregate([
-      { $match: { _id: Types.ObjectId(savedCompany._id) } },
+      { $match: { _id: new Types.ObjectId(savedCompany._id) } },
       {
         $lookup: {
           from: 'employers',
@@ -291,7 +274,7 @@ const updateCompany = async (req, res) => {
     const company = req.body;
     delete company.employers;
 
-    const dbCompany = await Company.findById(Types.ObjectId(id));
+    const dbCompany = await Company.findById(new Types.ObjectId(id));
     if (!dbCompany) {
       res.status(404).json(errors.notFound);
       return;
@@ -304,10 +287,10 @@ const updateCompany = async (req, res) => {
     }
 
     // Temporarily disable Kafka
-    await Company.findByIdAndUpdate(Types.ObjectId(id), company);
+    await Company.findByIdAndUpdate(new Types.ObjectId(id), company);
     
     const companyList = await Company.aggregate([
-      { $match: { _id: Types.ObjectId(id) } },
+      { $match: { _id: new Types.ObjectId(id) } },
       {
         $lookup: {
           from: 'employers',
@@ -334,7 +317,7 @@ const deleteCompany = async (req, res) => {
     const { id } = req.params;
 
     const { user } = req.headers;
-    const dbCompany = await Company.findById(Types.ObjectId(id));
+    const dbCompany = await Company.findById(new Types.ObjectId(id));
     if (!dbCompany) {
       res.status(404).json(errors.notFound);
       return;
@@ -353,7 +336,7 @@ const deleteCompany = async (req, res) => {
     }
 
     // Temporarily disable Kafka
-    await Company.findByIdAndDelete(Types.ObjectId(id));
+    await Company.findByIdAndDelete(new Types.ObjectId(id));
     res.status(200).json(null);
   } catch (err) {
     console.log(err);

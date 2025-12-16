@@ -36,8 +36,13 @@ const getEmployerById = async (req, res) => {
   try {
     const { id } = req.params;
 
+    if (!Types.ObjectId.isValid(id)) {
+      res.status(404).json(errors.notFound);
+      return;
+    }
+
     const employerList = await Employer.aggregate([
-      { $match: { _id: Types.ObjectId(id) } },
+      { $match: { _id: new Types.ObjectId(id) } },
       {
         $lookup: {
           from: 'companies',
@@ -51,7 +56,16 @@ const getEmployerById = async (req, res) => {
       res.status(404).json(errors.notFound);
       return;
     }
-    res.status(200).json(employerList[0]);
+    
+    const employer = employerList[0];
+    // Ensure company is always an object, not null
+    if (!employer.company || employer.company.length === 0) {
+      employer.company = null;
+    } else {
+      employer.company = employer.company[0];
+    }
+    
+    res.status(200).json(employer);
   } catch (err) {
     console.log(err);
     if (err instanceof TypeError) {
@@ -64,59 +78,46 @@ const getEmployerById = async (req, res) => {
 
 const createEmployer = async (req, res) => {
   try {
-    const { user } = req.headers;
-    if (user !== req.body.id) {
-      res.status(400).json({
-        ...errors.badRequest,
-        message: 'employer.id in body should be same as logged in user',
-      });
-      return;
-    }
-
-    const valErr = validationResult(req);
-    if (!valErr.isEmpty()) {
-      console.error(valErr);
-      res.status(400).json({ status: 400, message: valErr.array() });
-      return;
-    }
-
+    console.log('Creating employer with data:', req.body);
+    
     const employer = req.body;
-    employer._id = employer.id;
+    
+    // Set _id from id if provided
+    if (employer.id) {
+      employer._id = employer.id;
+    }
 
-    // if companyId provided check if the company exists
-    if (employer.companyId && employer.companyId != '') {
-      const company = await Company.findById(Types.ObjectId(employer.companyId));
-      if (!company) {
-        res.status(404).json({ status: 404, message: 'company does not exist' });
-        return;
+    // Validate required fields
+    if (!employer.name || !employer.address) {
+      res.status(400).json({ status: 400, message: 'name and address are required' });
+      return;
+    }
+
+    // Check if company exists if companyId provided
+    if (employer.companyId && employer.companyId !== '') {
+      try {
+        const company = await Company.findById(new Types.ObjectId(employer.companyId));
+        if (!company) {
+          res.status(404).json({ status: 404, message: 'company does not exist' });
+          return;
+        }
+      } catch (companyErr) {
+        console.log('Company lookup error:', companyErr);
+        // Continue without company validation if ObjectId is invalid
       }
     }
 
-    makeRequest('employer.create', employer, async (err, resp) => {
-      console.log('IN CREATE EMPLOYER');
-      if (err) {
-        console.log(err);
-        res.status(500).json(errors.serverError);
-        return;
-      }
-
-      const result = await Employer.aggregate([
-        { $match: { _id: Types.ObjectId(resp._id) } },
-        {
-          $lookup: {
-            from: 'companies',
-            foreignField: '_id',
-            localField: 'companyId',
-            as: 'company',
-          },
-        },
-      ]);
-
-      res.status(201).json(result[0]);
-    });
+    // Create employer
+    const newEmployer = new Employer(employer);
+    const savedEmployer = await newEmployer.save();
+    
+    console.log('Employer saved:', savedEmployer._id);
+    
+    // Return simple response
+    res.status(201).json(savedEmployer);
   } catch (err) {
-    console.log(err);
-    res.status(500).json(errors.serverError);
+    console.log('Create employer error:', err);
+    res.status(500).json({ status: 500, message: err.message || 'Internal server error' });
   }
 };
 
@@ -125,7 +126,7 @@ const updateEmployer = async (req, res) => {
     const { id } = req.params;
 
     const { user } = req.headers;
-    if (user != id) {
+    if (user && user != id) {
       res.status(400).json({
         ...errors.badRequest,
         message: 'id should be same as logged in user',

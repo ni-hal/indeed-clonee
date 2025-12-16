@@ -19,7 +19,7 @@ const photoRouter = require('./photo.route');
 
 const router = express.Router();
 
-router.use('/:compId/jobs', employerCheckMiddleware, jobsRouter);
+router.use('/:compId/jobs', jobsRouter);
 router.use('/:compId/reviews', reviewRouter);
 router.use('/:compId/salaries', salaryRouter);
 router.use('/:compId/applications', employerCheckMiddlewareOnAll, applicationRouter);

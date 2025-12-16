@@ -128,20 +128,20 @@ const createJob = async (req, res) => {
     return;
   }
 
-  const job = req.body;
-  job.companyId = compId;
+  try {
+    const job = req.body;
+    job.companyId = compId;
 
-  makeRequest('job.create', job, async (err, resp) => {
-    if (err) {
-      console.log(err);
-      res.status(500).json(errors.serverError);
-      return;
-    }
-    const company = await Company.findById(Types.ObjectId(resp.companyId));
+    const newJob = new Job(job);
+    const savedJob = await newJob.save();
+    const company = await Company.findById(Types.ObjectId(compId));
 
-    const result = { ...resp, company };
+    const result = { ...savedJob.toObject(), company };
     res.status(201).json(result);
-  });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(errors.serverError);
+  }
 };
 
 const updateJob = async (req, res) => {

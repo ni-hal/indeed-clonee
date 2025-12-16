@@ -163,6 +163,10 @@ function UpdateCompanyDetails() {
   const [showFlag, setShowFlag] = useState(false);
 
   const getCompanyDetails = async () => {
+    if (!company || !company._id) {
+      console.log('Company data not available yet');
+      return;
+    }
     const companyData = await getCompanyData(company._id);
     if (!companyData) return;
     setCompanyDetails(companyData);
@@ -277,8 +281,10 @@ function UpdateCompanyDetails() {
   };
 
   useEffect(() => {
-    getCompanyDetails();
-  }, []);
+    if (company && company._id) {
+      getCompanyDetails();
+    }
+  }, [company]);
 
   return (
     <div>

@@ -1,7 +1,7 @@
 {
   "development": {
     "database_conn": "mongodb://127.0.0.1:27017/company",
-    "auth_url": "http://localhost:8001",
+    "auth_url": "http://localhost:8000",
     "review_url": "http://review:3000",
     "user_url": "http://user:3000",
     "application_url": "http://application:3000",

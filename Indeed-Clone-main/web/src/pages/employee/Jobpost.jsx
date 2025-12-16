@@ -91,6 +91,11 @@ const Jobpost = ({ handleClose, getCompanyJobs }) => {
 
   const user = useSelector((state) => state.user);
 
+  // Early return if user data is not loaded
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
   function getFormattedDate(date) {
     const year = date.getFullYear();
     const month = (1 + date.getMonth()).toString().padStart(2, '0');
@@ -148,7 +153,13 @@ const Jobpost = ({ handleClose, getCompanyJobs }) => {
     };
     console.log(body);
 
-    const companyId = user.company?._id || localStorage.getItem('companyId');
+    const companyId = user?.company?._id || localStorage.getItem('companyId');
+
+    if (!companyId) {
+      alert('No company ID found. Please create a company first.');
+      return;
+    }
+
     await postJob(body, companyId);
     handleClose();
     getCompanyJobs();
