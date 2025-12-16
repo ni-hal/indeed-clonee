@@ -45,6 +45,7 @@
     "redux-thunk": "^2.4.1",
     "styled-components": "^5.3.3",
     "universal-cookie": "^4.0.4",
+    "vm-browserify": "^1.1.2",
     "web-vitals": "^1.1.2"
   },
   "scripts": {
@@ -57,7 +58,10 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "linebreak-style": "off"
+    }
   },
   "browserslist": {
     "production": [

@@ -1,4 +1,4 @@
-import axiosInstance from '../../config/axiosConfig';
+import axiosInstance from '../../config/companyAxiosConfig';
 
 const putCompany = async (body, id) => axiosInstance.put(
   `/companies/${id}`,

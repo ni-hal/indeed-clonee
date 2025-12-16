@@ -1,15 +1,12 @@
 import { getCookie } from 'react-use-cookie';
-import axiosInstance from '../../config/axiosConfig';
+import axiosInstance from '../../config/companyAxiosConfig';
 
 const token = getCookie('token');
-const postCompany = async (body) => axiosInstance.post(
-  '/companies',
-  body,
-  {
-    headers: {
-      Authorization: token,
-    },
+
+const postCompany = async (body) => axiosInstance.post('/companies', body, {
+  headers: {
+    Authorization: token,
   },
-).then((response) => response);
+});
 
 export default postCompany;

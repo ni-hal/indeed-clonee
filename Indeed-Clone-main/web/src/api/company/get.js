@@ -1,4 +1,4 @@
-import axiosInstance from '../../config/axiosConfig';
+import axiosInstance from '../../config/companyAxiosConfig';
 
 const getCompanies = async (params) => axiosInstance('/companies', {
   method: 'GET',

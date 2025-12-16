@@ -10,6 +10,7 @@
   "rules": {
     "react/prop-types": "off",
     "react/jsx-props-no-spreading": "off",
-    "react/no-unknown-property": "off"
+    "react/no-unknown-property": "off",
+    "linebreak-style": "off"
   }
 }
