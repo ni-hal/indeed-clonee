@@ -248,28 +248,23 @@ const createCompany = async (req, res) => {
     const company = req.body;
     company.employers = [user];
 
-    makeRequest('company.create', { company, user }, async (err, resp) => {
-      if (err) {
-        res.status(500).json(errors.serverError);
-        return;
-      }
-
-      const { _id } = resp;
-
-      const companyList = await Company.aggregate([
-        { $match: { _id: Types.ObjectId(_id) } },
-        {
-          $lookup: {
-            from: 'employers',
-            localField: 'employers',
-            foreignField: '_id',
-            as: 'employers',
-          },
+    // Temporarily disable Kafka
+    const newCompany = new Company(company);
+    const savedCompany = await newCompany.save();
+    
+    const companyList = await Company.aggregate([
+      { $match: { _id: Types.ObjectId(savedCompany._id) } },
+      {
+        $lookup: {
+          from: 'employers',
+          localField: 'employers',
+          foreignField: '_id',
+          as: 'employers',
         },
-      ]);
+      },
+    ]);
 
-      res.status(201).json(companyList[0]);
-    });
+    res.status(201).json(companyList[0]);
   } catch (err) {
     console.log(err);
     if (err instanceof TypeError) {
@@ -308,28 +303,22 @@ const updateCompany = async (req, res) => {
       return;
     }
 
-    makeRequest('company.update', { id: dbCompany._id, data: company }, async (err, resp) => {
-      if (err) {
-        res.status(500).json(errors.serverError);
-        return;
-      }
-
-      const { _id } = resp;
-
-      const companyList = await Company.aggregate([
-        { $match: { _id: Types.ObjectId(_id) } },
-        {
-          $lookup: {
-            from: 'employers',
-            localField: 'employers',
-            foreignField: '_id',
-            as: 'employers',
-          },
+    // Temporarily disable Kafka
+    await Company.findByIdAndUpdate(Types.ObjectId(id), company);
+    
+    const companyList = await Company.aggregate([
+      { $match: { _id: Types.ObjectId(id) } },
+      {
+        $lookup: {
+          from: 'employers',
+          localField: 'employers',
+          foreignField: '_id',
+          as: 'employers',
         },
-      ]);
+      },
+    ]);
 
-      res.status(200).json(companyList[0]);
-    });
+    res.status(200).json(companyList[0]);
   } catch (err) {
     console.log(err);
     if (err instanceof TypeError) {
@@ -363,18 +352,9 @@ const deleteCompany = async (req, res) => {
       return;
     }
 
-    makeRequest('company.delete', { id: dbCompany._id }, async (err, resp) => {
-      if (err) {
-        res.status(500).json(errors.serverError);
-        return;
-      }
-
-      if (resp.success) {
-        res.status(200).json(null);
-      } else {
-        res.status(500).json(errors.serverError);
-      }
-    });
+    // Temporarily disable Kafka
+    await Company.findByIdAndDelete(Types.ObjectId(id));
+    res.status(200).json(null);
   } catch (err) {
     console.log(err);
     if (err instanceof TypeError) {
