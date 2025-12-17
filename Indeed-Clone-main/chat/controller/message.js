@@ -3,7 +3,6 @@ const { errors, getPagination } = require('u-server-utils');
 const { default: axios } = require('axios');
 const { validationResult } = require('express-validator');
 const { Chat, Message } = require('../model');
-const { Types } = require('mongoose');
 const { ObjectId } = require('mongodb');
 
 const getAllMessages = async (req, res) => {
@@ -27,9 +26,7 @@ const getAllMessages = async (req, res) => {
 
     queryObj._id = id;
 
-    const chat = await Chat.findOne({
-      where: queryObj,
-    });
+    const chat = await Chat.findOne(queryObj);
 
     if (!chat) {
       res.status(404).json({
@@ -39,18 +36,14 @@ const getAllMessages = async (req, res) => {
       return;
     }
 
-    const listMessages = await Message.findAndCountAll({
-      where: {
-        chatId: chat._id,
-      },
-      order: [['createdAt', 'ASC']],
-      limit,
-      offset,
-    });
+    const listMessages = await Message.find({ chatId: chat._id })
+      .sort({ createdAt: 1 })
+      .limit(limit)
+      .skip(offset);
+    
+    const total = await Message.countDocuments({ chatId: chat._id });
 
-    res
-      .status(200)
-      .json({ total: listMessages.count, nodes: listMessages.rows });
+    res.status(200).json({ total, nodes: listMessages });
   } catch (err) {
     console.log(err);
     if (err.isAxiosError) {
@@ -82,9 +75,7 @@ const getMessageById = async (req, res) => {
 
     queryObj._id = id;
 
-    const chat = await Chat.findOne({
-      where: queryObj,
-    });
+    const chat = await Chat.findOne(queryObj);
 
     if (!chat) {
       res.status(404).json({
@@ -95,10 +86,8 @@ const getMessageById = async (req, res) => {
     }
 
     const message = await Message.findOne({
-      where: {
-        chatId: chat._id,
-        _id: messageId,
-      },
+      chatId: chat._id,
+      _id: messageId,
     });
 
     if (!message) {
@@ -140,9 +129,7 @@ const createMessage = async (req, res) => {
 
     queryObj._id = id;
 
-    const chat = await Chat.findOne({
-      where: queryObj,
-    });
+    const chat = await Chat.findOne(queryObj);
 
     if (!chat) {
       res.status(404).json({
@@ -164,10 +151,62 @@ const createMessage = async (req, res) => {
     data.from = user;
     data.chatId = id;
 
-    const newMessage = await Message.create(data);
+    const newMessage = new Message(data);
+    await newMessage.save();
 
     res.status(201).json(newMessage);
   } catch (err) {
+    res.status(500).json(errors.serverError);
+  }
+};
+
+const deleteMessage = async (req, res) => {
+  try {
+    const { id, messageId } = req.params;
+    const { role, user } = req.headers;
+
+    const queryObj = {};
+    if (role === 'employer') {
+      queryObj.employerId = user;
+    } else if (role === 'user') {
+      queryObj.userId = user;
+    } else {
+      res.status(401).json({
+        ...errors.unauthorized,
+        message: 'Chat not Authorized',
+      });
+      return;
+    }
+
+    queryObj._id = id;
+
+    const chat = await Chat.findOne(queryObj);
+
+    if (!chat) {
+      res.status(404).json({
+        ...errors.notFound,
+        message: 'Chat Not Found',
+      });
+      return;
+    }
+
+    const deleted = await Message.findOneAndDelete({
+      chatId: chat._id,
+      _id: messageId,
+      from: user,
+    });
+
+    if (!deleted) {
+      res.status(404).json({
+        ...errors.notFound,
+        message: 'Message not found or unauthorized',
+      });
+      return;
+    }
+
+    res.status(200).json({ message: 'Message deleted successfully' });
+  } catch (err) {
+    console.log(err);
     res.status(500).json(errors.serverError);
   }
 };
@@ -176,4 +215,5 @@ module.exports = {
   getAllMessages,
   getMessageById,
   createMessage,
+  deleteMessage,
 };

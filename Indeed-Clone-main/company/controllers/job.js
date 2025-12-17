@@ -4,21 +4,23 @@ const { validationResult } = require('express-validator');
 const { Types, Schema } = require('mongoose');
 const { getPagination, errors } = require('u-server-utils');
 const { Job, Company } = require('../model');
-const { makeRequest } = require('../util/kafka/client');
 
 // get all applications along with jobs when getApplication=true is passed in query
 const getAllJobs = async (req, res) => {
   try {
     const { compId } = req.params;
     const { limit, offset } = getPagination(req.query.page, req.query.limit);
-    const { since } = req.query;
+    const { since, q } = req.query;
 
     const whereOpts = { companyId: Types.ObjectId(compId) };
     if (since && since !== '') {
-      whereOpts.push({ postedOn: { $gte: new Date(since) } });
+      whereOpts.postedOn = { $gte: new Date(since) };
+    }
+    if (q && q !== '') {
+      whereOpts.$or = [{ title: { $regex: q, $options: 'i' } }, { jobLocation: { $regex: q, $options: 'i' } }];
     }
 
-    const jobsCount = await Job.count(whereOpts);
+    const jobsCount = await Job.countDocuments(whereOpts);
     const jobList = await Job.aggregate([
       { $match: whereOpts },
       {
@@ -36,41 +38,9 @@ const getAllJobs = async (req, res) => {
       .skip(offset)
       .limit(limit);
 
-    let jobString = '';
-    jobList.forEach((item) => {
-      jobString = `${item._id},${jobString}`;
-    });
-
-    const applicationsResp = await axios.get(`${global.gConfig.application_url}/applications`, {
-      params: { jobIds: jobString, all: true },
-      headers: { Authorization: req.headers.authorization },
-    });
-
-    const jobApplicationMap = {};
-    applicationsResp.data?.nodes?.forEach((app) => {
-      if (jobApplicationMap[app.jobId]) {
-        jobApplicationMap[app.jobId].push(app);
-      } else {
-        jobApplicationMap[app.jobId] = [app];
-      }
-    });
-
-    const result = jobList.map((job) => ({
-      ...job,
-      applications: jobApplicationMap[job._id.toString()],
-    }));
-
-    res.status(200).json({ total: jobsCount, nodes: result });
+    res.status(200).json({ total: jobsCount, nodes: jobList });
   } catch (err) {
     console.log(err);
-    if (err instanceof TypeError) {
-      res.status(400).json(errors.badRequest);
-      return;
-    }
-    if (err.isAxiosError) {
-      res.status(err.response?.status).json(err.response?.data);
-      return;
-    }
     res.status(500).json(errors.serverError);
   }
 };
@@ -166,29 +136,23 @@ const updateJob = async (req, res) => {
       return;
     }
 
-    makeRequest('job.update', { data: job, id: dbJob._id }, async (err, resp) => {
-      if (err) {
-        console.log(err);
-        res.status(500).json(errors.serverError);
-        return;
-      }
-      const result = await Job.aggregate([
-        { $match: { _id: Types.ObjectId(resp._id) } },
-        {
-          $lookup: {
-            from: 'companies',
-            localField: 'companyId',
-            foreignField: '_id',
-            as: 'company',
-          },
+    const updatedJob = await Job.findByIdAndUpdate(dbJob._id, job, { new: true });
+    const result = await Job.aggregate([
+      { $match: { _id: Types.ObjectId(updatedJob._id) } },
+      {
+        $lookup: {
+          from: 'companies',
+          localField: 'companyId',
+          foreignField: '_id',
+          as: 'company',
         },
-        {
-          $unwind: { path: '$company' },
-        },
-      ]);
+      },
+      {
+        $unwind: { path: '$company' },
+      },
+    ]);
 
-      res.status(200).json(result[0]);
-    });
+    res.status(200).json(result[0]);
   } catch (err) {
     console.log(err);
     if (err instanceof TypeError) {
@@ -212,19 +176,8 @@ const deleteJob = async (req, res) => {
       return;
     }
 
-    makeRequest('job.delete', { id: dbJob._id }, async (err, resp) => {
-      if (err) {
-        console.log(err);
-        res.status(500).json(errors.serverError);
-        return;
-      }
-
-      if (resp.success) {
-        res.status(200).json(null);
-      } else {
-        res.status(500).json(errors.serverError);
-      }
-    });
+    await Job.findByIdAndDelete(dbJob._id);
+    res.status(200).json(null);
   } catch (err) {
     console.log(err);
     if (err instanceof TypeError) {
@@ -238,7 +191,7 @@ const deleteJob = async (req, res) => {
 const getJobsList = async (req, res) => {
   try {
     const whereOpts = [];
-    const { city, state, q, companyId, location, all, type, industry, since } = req.query;
+    const { city, state, q, companyId, location, all, type, industry, since, title } = req.query;
 
     if (city && city !== '') {
       whereOpts.push({ city });
@@ -248,7 +201,7 @@ const getJobsList = async (req, res) => {
       whereOpts.push({ state });
     }
 
-    if (location && location !== '') {
+    if (location && location !== '' && location.toLowerCase() !== 'any location') {
       whereOpts.push({ jobLocation: location });
     }
 
@@ -264,9 +217,18 @@ const getJobsList = async (req, res) => {
       whereOpts.push({ 'industry.name': industry });
     }
 
+    if (title && title !== '') {
+      whereOpts.push({ title: { $regex: title, $options: 'i' } });
+    }
+
     if (q && q !== '') {
       whereOpts.push({
-        $or: [{ title: { $regex: `(?i)${q}` } }, { 'company.name': { $regex: `(?i)${q}` } }],
+        $or: [
+          { title: { $regex: q, $options: 'i' } },
+          { jobLocation: { $regex: q, $options: 'i' } },
+          { city: { $regex: q, $options: 'i' } },
+          { state: { $regex: q, $options: 'i' } }
+        ],
       });
     }
 

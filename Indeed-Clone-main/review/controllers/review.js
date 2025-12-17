@@ -3,7 +3,6 @@ const { validationResult, query } = require('express-validator');
 const { Types } = require('mongoose');
 const { getPagination, errors } = require('u-server-utils');
 const { Review } = require('../model');
-const { makeRequest } = require('../util/kafka/client');
 
 const getReviewsPerDay = async () => {
   const allReviews = await Review.find({});
@@ -142,14 +141,9 @@ const createReview = async (req, res) => {
     req.body.userId = Types.ObjectId(req.body.userId);
     const review = req.body;
 
-    makeRequest('review.create', review, async (err, resp) => {
-      if (err) {
-        res.status(500).json(errors.serverError);
-        return;
-      }
-
-      res.status(201).json(resp);
-    });
+    const newReview = new Review(review);
+    const savedReview = await newReview.save();
+    res.status(201).json(savedReview);
   } catch (err) {
     console.log(err);
     res.status(500).json(errors.serverError);
@@ -191,14 +185,8 @@ const updateReview = async (req, res) => {
       return;
     }
 
-    makeRequest('review.update', { id, data: review }, async (err, resp) => {
-      if (err) {
-        res.status(500).json(errors.serverError);
-        return;
-      }
-
-      res.status(200).json(resp);
-    });
+    const updatedReview = await Review.findByIdAndUpdate(id, review, { new: true });
+    res.status(200).json(updatedReview);
   } catch (err) {
     console.log(err);
     res.status(500).json(errors.serverError);
@@ -226,18 +214,8 @@ const deleteReview = async (req, res) => {
       return;
     }
 
-    makeRequest('review.delete', { id }, async (err, resp) => {
-      if (err) {
-        res.status(500).json(errors.serverError);
-        return;
-      }
-
-      if (resp.success) {
-        res.status(200).json(null);
-      } else {
-        res.status(500).json(errors.serverError);
-      }
-    });
+    await Review.findByIdAndDelete(id);
+    res.status(200).json(null);
   } catch (err) {
     console.log(err);
     res.status(500).json(errors.serverError);

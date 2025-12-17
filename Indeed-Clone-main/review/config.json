@@ -1,7 +1,7 @@
 {
   "development": {
     "database_conn": "mongodb://localhost:27017/review",
-    "auth_url": "http://auth:3000",
+    "auth_url": "http://localhost:3001",
     "kafka_host": "kafka:9092",
     "redis_host": "redis",
     "redis_pass": "indeedredispass"

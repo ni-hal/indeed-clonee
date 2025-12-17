@@ -1,42 +1,21 @@
-const { Sequelize } = require('sequelize');
+const mongoose = require('mongoose');
 
-if (!global.gConfig.database_host) {
-  console.error('please provide database_host in config file...');
-}
-
-if (!global.gConfig.database_user) {
-  console.error('please provide database_user in config file...');
-}
-
-if (!global.gConfig.database_password) {
-  console.error('please provide database_password in config file...');
-}
-
-if (!global.gConfig.database_name) {
-  console.error('please provide database_name in config file...');
+if (!global.gConfig.mongodb_url) {
+  console.error('please provide mongodb_url in config file...');
 }
 
 const initDB = async () => {
   if (global.DB) {
     return Promise.resolve(global.DB);
   }
-  global.DB = new Sequelize(
-    global.gConfig.database_name,
-    global.gConfig.database_user,
-    global.gConfig.database_password,
-    {
-      host: global.gConfig.database_host,
-      dialect: 'mysql',
-      logging: console.log,
-    },
-  );
-
-  return global.DB.authenticate()
-    .then(() => {
-      console.log('Connected to database...');
-      return Promise.resolve(global.DB);
-    })
-    .catch((err) => Promise.reject(err));
+  
+  try {
+    global.DB = await mongoose.connect(global.gConfig.mongodb_url);
+    console.log('Connected to MongoDB...');
+    return Promise.resolve(global.DB);
+  } catch (err) {
+    return Promise.reject(err);
+  }
 };
 
 module.exports = {

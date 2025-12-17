@@ -1,16 +1,14 @@
 {
     "development": {
-        "database_host": "localhost",
-        "database_user": "indeedadmin",
-        "database_password": "indeedadminpass",
-        "database_name": "auth",
+        "mongodb_url": "mongodb://localhost:27017/auth",
         "admin_email": "admin@mail.com",
-        "admin_password": "Admin@123"
+        "admin_password": "Admin@123",
+        "redis_host": "localhost",
+        "redis_port": 6379
     },
     "test": {
-        "database_host": "localhost",
-        "database_user": "indeedadmin",
-        "database_password": "indeedadminpass",
-        "database_name": "auth_test"
+        "mongodb_url": "mongodb://localhost:27017/auth_test",
+        "redis_host": "localhost",
+        "redis_port": 6379
     }
 }

@@ -1,41 +1,46 @@
-const { DataTypes } = require('sequelize');
+const mongoose = require('mongoose');
 
-const Photo = global.DB.define('photos', {
+const photoSchema = new mongoose.Schema({
   _id: {
-    type: DataTypes.STRING,
-    primaryKey: true,
-    unique: true,
+    type: String,
+    required: true,
   },
   isFeatured: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
+    type: Boolean,
+    required: true,
   },
   altText: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   userId: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   companyId: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   url: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   status: {
-    type: DataTypes.ENUM(['APPROVED', 'REJECTED', 'PENDING']),
+    type: String,
+    enum: ['APPROVED', 'REJECTED', 'PENDING'],
+    default: 'PENDING',
   },
+}, {
+  timestamps: true,
 });
 
-const runMigration = async (force) => {
+const Photo = mongoose.model('Photo', photoSchema);
+
+const runMigration = async () => {
   if (!global.DB) {
     return Promise.reject(new Error('please initialize DB'));
   }
-  await Photo.sync({ force });
+  console.log('MongoDB models ready');
   return Promise.resolve(global.DB);
 };
 

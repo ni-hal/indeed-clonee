@@ -1,61 +1,59 @@
-const { DataTypes } = require('sequelize');
+const mongoose = require('mongoose');
 
-const Chat = global.DB.define('chat', {
+const chatSchema = new mongoose.Schema({
   _id: {
-    type: DataTypes.STRING,
-    primaryKey: true,
-    unique: true,
+    type: String,
+    required: true,
   },
   employerId: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   userId: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   subject: {
-    type: DataTypes.TEXT,
-    allowNull: false,
+    type: String,
+    required: true,
   },
+}, {
+  timestamps: true,
 });
 
-const Message = global.DB.define('message', {
+const messageSchema = new mongoose.Schema({
   _id: {
-    type: DataTypes.STRING,
-    primaryKey: true,
-    unique: true,
+    type: String,
+    required: true,
+  },
+  chatId: {
+    type: String,
+    required: true,
   },
   content: {
-    type: DataTypes.TEXT,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   to: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
   from: {
-    type: DataTypes.STRING,
-    allowNull: false,
+    type: String,
+    required: true,
   },
+}, {
+  timestamps: true,
 });
 
-Chat.hasMany(Message, {
-  foreignKey: 'chatId',
-  sourceKey: '_id',
-});
+const Chat = mongoose.model('Chat', chatSchema);
+const Message = mongoose.model('Message', messageSchema);
 
-Message.belongsTo(Chat, {
-  foreignKey: 'chatId',
-  targetKey: '_id',
-});
-
-const runMigration = async (force) => {
+const runMigration = async () => {
   if (!global.DB) {
     return Promise.reject(new Error('please initialize DB'));
   }
-  await Chat.sync({ force });
-  await Message.sync({ force });
+  console.log('MongoDB models ready');
   return Promise.resolve(global.DB);
 };
 

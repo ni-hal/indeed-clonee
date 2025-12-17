@@ -25,14 +25,14 @@ const getAllChats = async (req, res) => {
       return;
     }
 
-    const listChats = await Chat.findAndCountAll({
-      where: queryObj,
-      order: [['createdAt', 'DESC']],
-      limit,
-      offset,
-    });
+    const listChats = await Chat.find(queryObj)
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(offset);
+    
+    const total = await Chat.countDocuments(queryObj);
 
-    if (!listChats) {
+    if (!listChats || listChats.length === 0) {
       res.status(404).json({
         ...errors.notFound,
         message: 'Chat does not exist for a given User',
@@ -56,9 +56,9 @@ const getAllChats = async (req, res) => {
         employerMap.set(ele._id, ele);
       });
 
-      listChats.rows.forEach((ele) => {
-        ele.dataValues.employer = employerMap.get(ele.dataValues.employerId);
-        delete ele.dataValues.employerId;
+      listChats.forEach((ele) => {
+        ele.employer = employerMap.get(ele.employerId);
+        delete ele.employerId;
       });
     }else if(role === 'employer'){
       const allUsers = await axios.get(
@@ -75,13 +75,13 @@ const getAllChats = async (req, res) => {
         userMap.set(ele._id, ele);
       });
 
-      listChats.rows.forEach((ele) => {
-        ele.dataValues.user = userMap.get(ele.dataValues.userId);
-        delete ele.dataValues.userId;
+      listChats.forEach((ele) => {
+        ele.user = userMap.get(ele.userId);
+        delete ele.userId;
       });
     }
 
-    res.status(200).json({ total: listChats.count, nodes: listChats.rows });
+    res.status(200).json({ total, nodes: listChats });
   } catch (err) {
     console.log(err);
     if (err.isAxiosError) {
@@ -112,9 +112,7 @@ const getChatById = async (req, res) => {
 
     queryObj._id = id;
 
-    const chat = await Chat.findOne({
-      where: queryObj,
-    });
+    const chat = await Chat.findOne(queryObj);
 
     if (!chat) {
       res.status(404).json({
@@ -138,8 +136,8 @@ const getChatById = async (req, res) => {
       return;
     }
 
-    chat.dataValues.user = getUser.data;
-    delete chat.dataValues.userId;
+    chat.user = getUser.data;
+    delete chat.userId;
 
     const getEmployee = await axios.get(
       `${global.gConfig.company_url}/employers/${chat.employerId}`,
@@ -154,8 +152,8 @@ const getChatById = async (req, res) => {
       res.status(500).json(errors.serverError);
       return;
     }
-    chat.dataValues.employee = getEmployee.data;
-    delete chat.dataValues.employerId;
+    chat.employee = getEmployee.data;
+    delete chat.employerId;
 
     res.status(200).json(chat);
   } catch (err) {
@@ -187,10 +185,8 @@ const createChat = async (req, res) => {
     }
 
     const chatExists = await Chat.findOne({
-      where: {
-        employerId: user,
-        userId: req.body.userId,
-      },
+      employerId: user,
+      userId: req.body.userId,
     });
 
     if (chatExists) {
@@ -205,7 +201,8 @@ const createChat = async (req, res) => {
     data._id = new ObjectId().toString();
     data.employerId = user;
 
-    const newChat = await Chat.create(data);
+    const newChat = new Chat(data);
+    await newChat.save();
 
     const getUser = await axios.get(
       `${global.gConfig.user_url}/users/${newChat.userId}`,
@@ -220,8 +217,8 @@ const createChat = async (req, res) => {
       res.status(500).json(errors.serverError);
       return;
     }
-    newChat.dataValues.user = getUser.data;
-    delete newChat.dataValues.userId;
+    newChat.user = getUser.data;
+    delete newChat.userId;
 
     const getEmployee = await axios.get(
       `${global.gConfig.company_url}/employers/${newChat.employerId}`,
@@ -236,8 +233,8 @@ const createChat = async (req, res) => {
       res.status(500).json(errors.serverError);
       return;
     }
-    newChat.dataValues.employee = getEmployee.data;
-    delete newChat.dataValues.employerId;
+    newChat.employee = getEmployee.data;
+    delete newChat.employerId;
 
     res.status(201).json(newChat);
   } catch (err) {
@@ -250,8 +247,86 @@ const createChat = async (req, res) => {
   }
 };
 
+const updateChat = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role, user } = req.headers;
+
+    const valErr = validationResult(req);
+    if (!valErr.isEmpty()) {
+      res.status(400).json({ status: 400, message: valErr.array() });
+      return;
+    }
+
+    const queryObj = {};
+    if (role === 'employer') {
+      queryObj.employerId = user;
+    } else {
+      res.status(401).json({
+        ...errors.unauthorized,
+        message: 'Only employer can update chat',
+      });
+      return;
+    }
+
+    queryObj._id = id;
+
+    const updated = await Chat.findOneAndUpdate(queryObj, req.body, { new: true });
+
+    if (!updated) {
+      res.status(404).json({
+        ...errors.notFound,
+        message: 'Chat not found',
+      });
+      return;
+    }
+
+    res.status(200).json(updated);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(errors.serverError);
+  }
+};
+
+const deleteChat = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role, user } = req.headers;
+
+    const queryObj = {};
+    if (role === 'employer') {
+      queryObj.employerId = user;
+    } else {
+      res.status(401).json({
+        ...errors.unauthorized,
+        message: 'Only employer can delete chat',
+      });
+      return;
+    }
+
+    queryObj._id = id;
+
+    const deleted = await Chat.findOneAndDelete(queryObj);
+
+    if (!deleted) {
+      res.status(404).json({
+        ...errors.notFound,
+        message: 'Chat not found',
+      });
+      return;
+    }
+
+    res.status(200).json({ message: 'Chat deleted successfully' });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json(errors.serverError);
+  }
+};
+
 module.exports = {
   getAllChats,
   getChatById,
   createChat,
+  updateChat,
+  deleteChat,
 };

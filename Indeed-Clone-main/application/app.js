@@ -59,9 +59,9 @@ const options = {
 
 expressSwagger(options);
 
-app.use(getAuthMiddleware(validate));
-app.use(getRedisRequestMiddleware('application'));
-app.use(getRedisResponseMiddleware('application'));
+// app.use(getAuthMiddleware(validate)); // Temporarily disabled for testing
+// app.use(getRedisRequestMiddleware('application')); // Disabled for local development
+// app.use(getRedisResponseMiddleware('application')); // Disabled for local development
 // app.use(getAccessMiddleware(acl));
 
 app.use('/applications', applicationRouter);

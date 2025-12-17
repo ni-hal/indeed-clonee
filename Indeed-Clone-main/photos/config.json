@@ -1,0 +1,14 @@
+{
+  "development": {
+    "mongodb_url": "mongodb://localhost:27017/photos",
+    "auth_url": "http://localhost:3001",
+    "s3_access_key": "YOUR_AWS_ACCESS_KEY",
+    "s3_secret_key": "YOUR_AWS_SECRET_KEY",
+    "s3_region": "us-east-1",
+    "s3_bucket_name": "indeed-media"
+  },
+  "test": {
+    "mongodb_url": "mongodb://localhost:27017/photos_test",
+    "auth_url": "http://localhost:3001"
+  }
+}

@@ -1,6 +1,6 @@
 const express = require('express');
 
-const { createChat, getChatById, getAllChats } = require('../controller/chat');
+const { createChat, getChatById, getAllChats, updateChat, deleteChat } = require('../controller/chat');
 
 const { body } = require('express-validator');
 
@@ -53,5 +53,28 @@ router.get('/', getAllChats);
  * @returns {Error} 500 - {error: Internal Server Error}
  */
 router.post('/', ...bodyValidators(), createChat);
+
+/**
+ * Update Chat
+ * @route PUT /chats/{id}
+ * @group Chat
+ * @param {string} id.path.required
+ * @param {Chat.model} Chat.body.required
+ * @security JWT
+ * @returns {Chat.model} 200 - Updated Chat
+ * @returns {Error} 500 - {error: Internal Server Error}
+ */
+router.put('/:id', ...bodyValidators(), updateChat);
+
+/**
+ * Delete Chat
+ * @route DELETE /chats/{id}
+ * @group Chat
+ * @param {string} id.path.required
+ * @security JWT
+ * @returns {object} 200 - {message: Chat deleted successfully}
+ * @returns {Error} 500 - {error: Internal Server Error}
+ */
+router.delete('/:id', deleteChat);
 
 module.exports = router;

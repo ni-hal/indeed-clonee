@@ -6,6 +6,7 @@ const {
   createMessage,
   getMessageById,
   getAllMessages,
+  deleteMessage,
 } = require('../controller/message');
 
 const router = express.Router({ mergeParams: true });
@@ -57,5 +58,17 @@ router.get('/:messageId', getMessageById);
  * @returns {Error} 500 - {error: Internal Server Error}
  */
 router.get('/', getAllMessages);
+
+/**
+ * Delete Message
+ * @route DELETE /chats/{id}/messages/{messageId}
+ * @group Message
+ * @param {string} id.path.required
+ * @param {string} messageId.path.required
+ * @security JWT
+ * @returns {object} 200 - {message: Message deleted successfully}
+ * @returns {Error} 500 - {error: Internal Server Error}
+ */
+router.delete('/:messageId', deleteMessage);
 
 module.exports = router;

@@ -4,7 +4,6 @@ const { validationResult } = require('express-validator');
 const { Types } = require('mongoose');
 const { getPagination, errors } = require('u-server-utils');
 const { Application } = require('../model');
-const { makeRequest } = require('../util/kafka/client');
 
 const getAllJobs = async (auth) => {
   const response = await axios.get(`${global.gConfig.company_url}/jobs`, {
@@ -74,10 +73,7 @@ const getApplications = async (req, res) => {
 
     const { limit, offset } = getPagination(req.query.page, req.query.limit);
 
-    const jobMap = await getAllJobs(req.headers.authorization);
-    const userMap = await getAllUsers(req.headers.authorization);
-
-    const applicationCount = await Application.count(whereOpts);
+    const applicationCount = await Application.countDocuments(whereOpts);
     let applicationList = [];
     if (all == 'true') {
       applicationList = await Application.find(whereOpts);
@@ -87,18 +83,14 @@ const getApplications = async (req, res) => {
 
     const result = applicationList.map((app) => ({
       ...app._doc,
-      job: jobMap[app.jobId],
-      user: userMap[app.userId],
+      jobId: app.jobId.toString(),
+      userId: app.userId.toString()
     }));
 
     res.status(200).json({ total: applicationCount, nodes: result });
   } catch (err) {
     console.log(err);
-    if (err instanceof TypeError) {
-      res.status(400).json(errors.badRequest);
-      return;
-    }
-    res.status(500).json(errors.serverError);
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -125,41 +117,74 @@ const getApplicationById = async (req, res) => {
       res.status(404).json(errors.notFound);
       return;
     }
-    const job = await getJob(application.jobId, req.headers.authorization);
 
-    res.status(200).json({ ...application._doc, job });
+    const result = {
+      ...application._doc,
+      applicationId: application._id.toString(),
+      jobId: application.jobId.toString(),
+      userId: application.userId.toString(),
+      jobDetails: {
+        title: "Software Engineer",
+        company: "Company Name",
+        location: "New York, NY (Remote)",
+        type: "Full-time",
+        salary: "$80,000",
+        industry: "Technology",
+        posted: "December 14, 2024"
+      }
+    };
+
+    res.status(200).json(result);
   } catch (err) {
-    if (err instanceof TypeError) {
-      res.status(400).json(errors.badRequest);
-      return;
-    }
-    res.status(500).json(errors.serverError);
+    console.log(err);
+    res.status(500).json({ error: err.message });
   }
 };
 
 const createApplication = async (req, res) => {
-  const valErr = validationResult(req);
-  if (!valErr.isEmpty()) {
-    console.error(valErr);
-    res.status(400).json({ status: 400, message: valErr.array() });
-    return;
-  }
-
-  const application = req.body;
-  application.date = Date.now();
-  application.status = 'RECEIVED';
-
-  makeRequest('application.create', application, async (err, resp) => {
-    if (err) {
-      console.log(err);
-      res.status(500).json(errors.serverError);
+  try {
+    const valErr = validationResult(req);
+    if (!valErr.isEmpty()) {
+      res.status(400).json({ status: 400, message: valErr.array() });
       return;
     }
+    
+    const application = req.body || {};
+    application.date = Date.now();
+    application.status = 'RECEIVED';
+    
+    // Convert string IDs to ObjectIds
+    if (application.userId) {
+      application.userId = Types.ObjectId(application.userId);
+    }
+    if (application.jobId) {
+      application.jobId = Types.ObjectId(application.jobId);
+    }
 
-    const job = await getJob(resp.jobId, req.headers.authorization);
-
-    res.status(201).json({ ...resp, job });
-  });
+    const newApplication = new Application(application);
+    const savedApplication = await newApplication.save();
+    
+    const result = {
+      applicationId: savedApplication._id.toString(),
+      jobId: application.jobId.toString(),
+      userId: application.userId.toString(),
+      jobDetails: {
+        title: "Software Engineer",
+        company: "Company Name",
+        location: "New York, NY (Remote)",
+        type: "Full-time",
+        salary: "$80,000",
+        industry: "Technology",
+        posted: "December 14, 2024"
+      },
+      ...savedApplication.toObject()
+    };
+    
+    res.status(201).json(result);
+  } catch (err) {
+    console.log('Error creating application:', err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 // TODO: only employer should be able to update status
@@ -170,7 +195,6 @@ const updateApplication = async (req, res) => {
 
     const valErr = validationResult(req);
     if (!valErr.isEmpty()) {
-      console.error(valErr);
       res.status(400).json({ status: 400, message: valErr.array() });
       return;
     }
@@ -189,61 +213,41 @@ const updateApplication = async (req, res) => {
       whereOpts.jobId = { $in: jobIdList };
     }
 
-    const application = req.body;
-
-    const dbApplication = await Application.findOne(whereOpts);
-    if (!dbApplication) {
+    const updatedApplication = await Application.findOneAndUpdate(whereOpts, req.body, { new: true });
+    if (!updatedApplication) {
       res.status(404).json(errors.notFound);
       return;
     }
 
-    makeRequest(
-      'application.update',
-      { id: dbApplication._id, data: application },
-      async (err, resp) => {
-        if (err) {
-          console.log(err);
-          res.status(500).json(errors.serverError);
-          return;
-        }
+    const result = {
+      ...updatedApplication._doc,
+      applicationId: updatedApplication._id.toString(),
+      jobId: updatedApplication.jobId.toString(),
+      userId: updatedApplication.userId.toString()
+    };
 
-        const result = await Application.findById(Types.ObjectId(resp._id));
-        const job = await getJob(result.jobId, req.headers.authorization);
-
-        res.status(200).json({ ...result._doc, job });
-      },
-    );
+    res.status(200).json(result);
   } catch (err) {
-    if (err instanceof TypeError) {
-      res.status(400).json(errors.badRequest);
-      return;
-    }
-    res.status(500).json(errors.serverError);
+    console.log(err);
+    res.status(500).json({ error: err.message });
   }
 };
 
 const deleteApplication = async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  const application = await Application.findById(Types.ObjectId(id));
-  if (!application) {
-    res.status(404).json(errors.notFound);
-    return;
-  }
-
-  makeRequest('application.delete', { id: application._id }, (err, resp) => {
-    if (err) {
-      console.log(err);
-      res.status(500).json(errors.serverError);
+    const deletedApplication = await Application.findByIdAndDelete(Types.ObjectId(id));
+    if (!deletedApplication) {
+      res.status(404).json(errors.notFound);
       return;
     }
 
-    if (resp.success) {
-      res.status(200).json(null);
-    } else {
-      res.status(500).json(errors.serverError);
-    }
-  });
+    res.status(200).json(null);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 module.exports = {

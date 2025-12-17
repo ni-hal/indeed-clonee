@@ -2,7 +2,6 @@
 const { validationResult } = require('express-validator');
 const { errors, getPagination } = require('u-server-utils');
 const { default: axios } = require('axios');
-const { makeRequest } = require('../util/kafka/client');
 const { User } = require('../model');
 
 const getUsersByReviews = async (auth) => {
@@ -49,14 +48,14 @@ const createUser = async (req, res) => {
   const userObj = req.body;
   userObj._id = userObj.id;
 
-  makeRequest('user.create', userObj, (err, resp) => {
-    if (err || !resp) {
-      console.log(err);
-      res.status(500).json(errors.serverError);
-      return;
-    }
-    res.status(201).json(resp);
-  });
+  try {
+    const newUser = new User(userObj);
+    const savedUser = await newUser.save();
+    res.status(201).json(savedUser);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 const getAllUsers = async (req, res) => {
@@ -129,14 +128,12 @@ const updateUser = async (req, res) => {
     const userObj = req.body;
     userObj._id = id;
 
-    makeRequest('user.update', userObj, (err, resp) => {
-      if (err || !resp) {
-        console.log(err);
-        res.status(500).json(errors.serverError);
-        return;
-      }
-      res.status(200).json(resp);
-    });
+    const updatedUser = await User.findByIdAndUpdate(id, userObj, { new: true });
+    if (!updatedUser) {
+      res.status(404).json(errors.notFound);
+      return;
+    }
+    res.status(200).json(updatedUser);
   } catch (err) {
     console.log(err);
     res.status(500).json(errors.serverError);
@@ -144,13 +141,18 @@ const updateUser = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
-  makeRequest('user.delete', req.params, (err, resp) => {
-    if (err || !resp) {
-      res.status(500).json(errors.serverError);
+  try {
+    const { id } = req.params;
+    const deletedUser = await User.findByIdAndDelete(id);
+    if (!deletedUser) {
+      res.status(404).json(errors.notFound);
       return;
     }
     res.status(200).json(null);
-  });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
 };
 
 module.exports = {
