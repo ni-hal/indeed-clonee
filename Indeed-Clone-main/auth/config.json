@@ -1,6 +1,6 @@
 {
     "development": {
-        "mongodb_url": "mongodb://localhost:27017/auth",
+        "mongodb_url": "mongodb://indeedadmin:indeedadminpass@localhost:27017/auth?authSource=admin",
         "admin_email": "admin@mail.com",
         "admin_password": "Admin@123",
         "redis_host": "localhost",

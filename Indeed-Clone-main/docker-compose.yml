@@ -7,9 +7,6 @@ services:
   mongodb:
     image: mongo:4.4.0-rc7
     restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: indeedadmin
-      MONGO_INITDB_ROOT_PASSWORD: indeedadminpass
     volumes:
       - ./nosql-data:/data/db
       - ./db-init-scripts:/docker-entrypoint-initdb.d

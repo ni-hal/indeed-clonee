@@ -16,15 +16,26 @@ const expressSwagger = require('express-swagger-generator')(app);
 app.use(logger('dev'));
 app.use(cookieParser());
 app.use(bodyParser.json());
-app.use(cors());
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Max-Age', 1728000);
+  res.removeHeader('X-Powered-By');
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', '*');
+  res.header('Access-Control-Allow-Headers', '*');
+  res.header('Access-Control-Max-Age', '3600');
+  res.header('Vary', 'Origin');
+  
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('');
+    return;
+  }
   next();
 });
+
+app.use(cors({
+  origin: true,
+  credentials: false,
+  optionsSuccessStatus: 200
+}));
 
 app.use('/auth', authRoutes);
 

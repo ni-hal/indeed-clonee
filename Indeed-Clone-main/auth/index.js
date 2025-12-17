@@ -5,7 +5,7 @@ const { initDB } = require('./db');
 
 initDB().then(() => {
   const app = require('./app');
-  const port = process.env.PORT || '7000';
+  const port = process.env.PORT || '9999';
   app.set('port', port);
   const server = http.createServer(app);
   server.listen(port);

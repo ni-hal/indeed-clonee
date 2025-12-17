@@ -1,6 +1,6 @@
 {
   "development": {
-    "mongodb_url": "mongodb://localhost:27017/photos",
+    "mongodb_url": "mongodb://indeedadmin:indeedadminpass@localhost:27017/photos?authSource=admin",
     "auth_url": "http://localhost:3001",
     "s3_access_key": "YOUR_AWS_ACCESS_KEY",
     "s3_secret_key": "YOUR_AWS_SECRET_KEY",

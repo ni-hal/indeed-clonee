@@ -1,5 +1,5 @@
-import axiosInstance from '../../config/axiosConfig';
+import userAxiosInstance from '../../config/userAxiosConfig';
 
-const getUser = async (params) => axiosInstance.get(`/users/${params}`, {});
+const getUser = async (params) => userAxiosInstance.get(`/users/${params}`, {});
 
 export default getUser;

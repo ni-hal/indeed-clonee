@@ -2,14 +2,14 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { getCookie } from 'react-use-cookie';
 
-const companyAxiosInstance = axios.create({
-  baseURL: 'http://127.0.0.1:4001', // Company service port
+const userAxiosInstance = axios.create({
+  baseURL: 'http://127.0.0.1:3008', // User service port
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-companyAxiosInstance.interceptors.request.use((config) => {
+userAxiosInstance.interceptors.request.use((config) => {
   const token = getCookie('token');
   if (token) {
     // eslint-disable-next-line no-param-reassign
@@ -18,7 +18,7 @@ companyAxiosInstance.interceptors.request.use((config) => {
   return config;
 });
 
-companyAxiosInstance.interceptors.response.use(
+userAxiosInstance.interceptors.response.use(
   (res) => res,
   (err) => {
     if (!err.response) {
@@ -40,4 +40,4 @@ companyAxiosInstance.interceptors.response.use(
   },
 );
 
-export default companyAxiosInstance;
+export default userAxiosInstance;

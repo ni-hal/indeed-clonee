@@ -20,18 +20,27 @@ const getAllReviews = async (auth) => {
 };
 
 const getAvgReviewData = async (auth) => {
-  const resp = await axios.get(`${global.gConfig.review_url}/reviews`, {
-    headers: {
-      Authorization: auth,
-    },
-    params: {
-      all: true,
-    },
-  });
+  try {
+    const resp = await axios.get(`${global.gConfig.review_url}/reviews`, {
+      headers: {
+        Authorization: auth,
+      },
+      params: {
+        all: true,
+      },
+    });
 
-  if (!resp) {
-    throw Error('no response from reviews service');
+    if (!resp) {
+      throw Error('no response from reviews service');
+    }
+    return resp;
+  } catch (err) {
+    console.log('Review service not available:', err.message);
+    return { data: [] };
   }
+};
+
+const processAvgReviewData = (resp) => {
 
   const avgReviewMap = {};
   resp.data.forEach((r) => {
@@ -78,19 +87,33 @@ const getAvgReviewData = async (auth) => {
   return avgReviewMap;
 };
 
-const getAvgSalaryData = async (auth) => {
-  const resp = await axios.get(`${global.gConfig.user_url}/salaries`, {
-    headers: {
-      Authorization: auth,
-    },
-    params: {
-      all: true,
-    },
-  });
+const getAvgReviewDataProcessed = async (auth) => {
+  const resp = await getAvgReviewData(auth);
+  return processAvgReviewData(resp);
+};
 
-  if (!resp) {
-    throw Error('no response from user service');
+const getAvgSalaryData = async (auth) => {
+  try {
+    const resp = await axios.get(`${global.gConfig.user_url}/salaries`, {
+      headers: {
+        Authorization: auth,
+      },
+      params: {
+        all: true,
+      },
+    });
+
+    if (!resp) {
+      throw Error('no response from user service');
+    }
+    return resp;
+  } catch (err) {
+    console.log('User service not available:', err.message);
+    return { data: [] };
   }
+};
+
+const processAvgSalaryData = (resp) => {
 
   const avgSalaryMap = {};
   resp.data.forEach((s) => {
@@ -117,8 +140,8 @@ const getAllCompanies = async (req, res) => {
 
     if (all) {
       const companies = await Company.find({});
-      const avgReviewMap = req.headers.authorization ? await getAvgReviewData(req.headers.authorization) : {};
-      const avgSalaryMap = req.headers.authorization ? await getAvgSalaryData(req.headers.authorization) : {};
+      const avgReviewMap = req.headers.authorization ? await getAvgReviewDataProcessed(req.headers.authorization) : {};
+      const avgSalaryMap = req.headers.authorization ? await processAvgSalaryData(await getAvgSalaryData(req.headers.authorization)) : {};
 
       const result = companies.map((c) => ({
         ...avgReviewMap[c._id.toString()],
@@ -154,8 +177,8 @@ const getAllCompanies = async (req, res) => {
       .skip(offset)
       .limit(limit);
 
-    const avgReviewMap = req.headers.authorization ? await getAvgReviewData(req.headers.authorization) : {};
-    const avgSalaryMap = req.headers.authorization ? await getAvgSalaryData(req.headers.authorization) : {};
+    const avgReviewMap = req.headers.authorization ? await getAvgReviewDataProcessed(req.headers.authorization) : {};
+    const avgSalaryMap = req.headers.authorization ? await processAvgSalaryData(await getAvgSalaryData(req.headers.authorization)) : {};
     const result = companyList.map((c) => ({
       ...avgReviewMap[c._id.toString()],
       ...avgSalaryMap[c._id.toString()],

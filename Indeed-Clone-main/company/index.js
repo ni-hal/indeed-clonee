@@ -9,7 +9,7 @@ const { createKafkaTopics } = require('./util/kafka/topics');
 initDB();
 // createKafkaTopics(); // Disabled Kafka for local development
 // redisClient.connect().then(() => { // Disabled Redis for local development
-const port = process.env.PORT || '4000';
+const port = process.env.PORT || '4001';
 app.set('port', port);
 const server = http.createServer(app);
 server.listen(port);

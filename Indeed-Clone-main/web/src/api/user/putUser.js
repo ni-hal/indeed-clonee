@@ -1,8 +1,8 @@
 import { getCookie } from 'react-use-cookie';
-import axiosInstance from '../../config/axiosConfig';
+import userAxiosInstance from '../../config/userAxiosConfig';
 
 const token = getCookie('token');
-const putUser = async (body, userID) => axiosInstance.put(
+const putUser = async (body, userID) => userAxiosInstance.put(
   `/users/${userID}`,
   body,
   {

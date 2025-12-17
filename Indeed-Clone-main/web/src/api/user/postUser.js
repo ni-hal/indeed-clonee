@@ -1,6 +1,6 @@
-import axiosInstance from '../../config/axiosConfig';
+import userAxiosInstance from '../../config/userAxiosConfig';
 
-const postUser = (payload) => axiosInstance
+const postUser = (payload) => userAxiosInstance
   .post('/users', payload, {})
   .then((response) => response)
   .catch((err) => {
