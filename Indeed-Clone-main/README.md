@@ -1,26 +1,83 @@
-# Indeed-Clone
+# Indeed Clone - Microservices Architecture
 
-In this project a job board (portal) is developed similar to Indeed. This application enables users to login as employers and allow them to add their company profile information and post job openings in the companies. Also users can login as job seekers who can apply for the jobs posted for the company. The job seekers (or normal users) can also post reviews for the companies and also post pictures of the company they are working at. All these reviews and pictures are not posted directly but are verified through admin of Indeed. The admin can approve/reject the reviews/pictures which are posted by job seekers. Also admin can see analytics information about admin.
+A job portal application built with microservices architecture using Node.js, Express, and MongoDB.
 
-## System Architecture
-![System Architecture](IndeedSystemDesign.png)
+## Services
 
-We have designed the application with microservice architecture and divided the whole backend application into the above shown seven services. These services have independent databases and chosen databases (MySql or MongoDB) based on the needs for that particular service. Caching server (Redis) is used for fast retrieval of data
-which is requested frequently. Also for scalability and reliability, Kafka is used for accessing databases. All database calls are done by a kafka-backend server which subscribes to various topics for data that is requested by other services. A docker-compose file is provided which builds containers for all services and run the whole application stack.
+### Application Service (Port 7003)
+- Job application management
+- CRUD operations for applications
+- Validation and error handling
 
-## Demo Video
-[![Indeed Clone Demo](Cover.png)](https://www.youtube.com/watch?v=PFtoADovLRU)
+### Company Service (Port 3008)
+- Company and job management
+- Job posting and updates
+- Company profiles
 
+### User Service (Port 3004)
+- User registration and management
+- User profiles and authentication
+- User data operations
 
-## How to Run
-* There is sample config file (config.json) in each service folders which you should edit with proper values. (To run in develop mode no need to edit any file)
-* To run the servers and frontend (web) just run `docker-compose up`
-* Access the web app at `localhost:3000`
-* Following are the API Docs URL for each service
-    - Auth: `localhost:7000/api-docs`
-    - Company: `localhost:7001/api-docs`
-    - User: `localhost:7002/api-docs`
-    - Application: `localhost:7003/api-docs`
-    - Review: `localhost:7004/api-docs`
-    - Photos: `localhost:7005/api-docs`
-    - Chat: `localhost:7006/api-docs`
+### Review Service (Port 3006)
+- Company reviews and ratings
+- Review management
+- Featured reviews
+
+### Photos Service (Port 3001)
+- Image upload and management
+- Photo storage and retrieval
+
+### Auth Service (Port 3002)
+- Authentication and authorization
+- JWT token management
+- User session handling
+
+### Chat Service (Port 3007)
+- Real-time messaging
+- Chat between users and employers
+
+## Recent Changes
+
+### Kafka Dependencies Removed
+- Fixed ENOTFOUND kafka errors across all services
+- Replaced Kafka messaging with direct MongoDB operations
+- Improved local development experience
+
+### Port Conflicts Resolved
+- Updated default ports to avoid conflicts
+- Next.js frontend moved to port 3005
+
+### Database Improvements
+- Fixed deprecated MongoDB methods (count -> countDocuments)
+- Added proper validation error handling
+- Improved error responses
+
+## Setup Instructions
+
+1. Install dependencies for each service:
+   ```bash
+   cd [service-directory]
+   npm install
+   ```
+
+2. Start MongoDB locally
+
+3. Start each service:
+   ```bash
+   npm start
+   ```
+
+4. Services will be available on their respective ports
+
+## API Documentation
+
+Each service includes Swagger documentation available at:
+- `http://localhost:[port]/api-docs`
+
+## Environment Variables
+
+Configure the following in each service's `.env` file:
+- MongoDB connection string
+- Service URLs for inter-service communication
+- JWT secrets for authentication
